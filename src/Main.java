@@ -20,7 +20,7 @@ public class Main {
         Resource r2 = new Resource(2L);
         Resource r3 = new Resource(3L);
         resourceList.add(r1);
-//        resourceList.add(r2);
+        resourceList.add(r2);
 //        resourceList.add(r3);
 
 
