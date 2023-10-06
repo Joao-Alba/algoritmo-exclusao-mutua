@@ -1,9 +1,9 @@
 import java.util.Optional;
 
-public class KillCoordinatorRunnable implements Runnable{
+public class KillCoordinatorRunnable implements Runnable {
 
-    public void run(){
-        while(true){
+    public void run() {
+        while (true) {
             try {
                 Thread.sleep(60000);
             } catch (InterruptedException ignored) {
@@ -13,6 +13,7 @@ public class KillCoordinatorRunnable implements Runnable{
 
             coordinatorThreadProcessOpt.ifPresent(coordinator -> {
                 coordinator.thread().interrupt();
+                Main.threadProcessList.remove(coordinator);
                 System.out.println("Coordenador interrompido: #" + coordinator.process().getId());
             });
         }

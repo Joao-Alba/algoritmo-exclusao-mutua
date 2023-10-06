@@ -3,7 +3,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class CheckResourceAccessRunnable implements Runnable{
+public class CheckResourceAccessRunnable implements Runnable {
 
     private final Resource resource;
     private final Queue<AtomicBoolean> accessQueue;
@@ -15,11 +15,11 @@ public class CheckResourceAccessRunnable implements Runnable{
         this.accessQueue = accessQueue;
     }
 
-    public void run(){
-        try{
-            while (true){
+    public void run() {
+        try {
+            while (true) {
                 resourceCheckLock.lock();
-                if(!resource.isOccupied()){
+                if (!resource.isOccupied()) {
                     accessQueue.remove().set(true);
                     break;
                 }
@@ -28,7 +28,7 @@ public class CheckResourceAccessRunnable implements Runnable{
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
-          resourceCheckLock.unlock();
+            resourceCheckLock.unlock();
         }
     }
 }

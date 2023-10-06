@@ -1,13 +1,13 @@
 import java.util.Random;
 
-public class CreateProcessRunnable implements Runnable{
+public class CreateProcessRunnable implements Runnable {
 
     private static final Random rand = new Random();
 
-    public void run(){
-        while(true){
+    public void run() {
+        while (true) {
             try {
-                Thread.sleep(20000);
+                Thread.sleep(1000);
             } catch (InterruptedException ignored) {
             }
 
@@ -17,18 +17,16 @@ public class CreateProcessRunnable implements Runnable{
             Main.threadProcessList.add(new ThreadProcess(thread, process));
 
             System.out.println("Processo criado: #" + process.getId());
-
         }
     }
 
-    private Long generateProcessId(){
-        try{
+    private Long generateProcessId() {
+        try {
             Main.idLock.lock();
             int index = rand.nextInt(Main.availableIdList.size());
             return Main.availableIdList.remove(index);
-        }finally {
+        } finally {
             Main.idLock.unlock();
         }
-
     }
 }

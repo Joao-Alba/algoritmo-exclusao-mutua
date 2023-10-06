@@ -43,7 +43,7 @@ public class Main {
         System.out.println("Coordenador não encontrado, processo #" + process.getId() + " iniciou eleição");
         Optional<ThreadProcess> highestIdProcess = threadProcessList.stream().max(Comparator.comparing(threadProcess -> threadProcess.process().getId()));
 
-        if(highestIdProcess.isPresent()){
+        if (highestIdProcess.isPresent()) {
             highestIdProcess.get().process().becomeCoordinator();
             System.out.println("Processo #" + highestIdProcess.get().process().getId() + " se tornou o novo coordenador");
             return highestIdProcess;
