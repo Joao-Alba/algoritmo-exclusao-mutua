@@ -6,11 +6,12 @@ public class Resource {
     private final Long id;
     private boolean occupied = false;
 
-    public void useResource() throws InterruptedException {
+    public String useResource() throws InterruptedException {
         this.setOccupied(true);
         int waitTime = rand.nextInt(5000, 15000);
         Thread.sleep(waitTime);
         this.setOccupied(false);
+        return "Recurso usado";
     }
 
     public Resource(Long id) {

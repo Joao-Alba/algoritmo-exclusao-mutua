@@ -6,39 +6,33 @@ public class Process implements Runnable{
     private final Long id;
     private boolean isCoordinator = false;
     private final int accessResourceCooldown = rand.nextInt(10000, 25000);
-    private final HashMap<Long, Queue<ThreadProcess>> resourceAccessQueue = new HashMap<>();
+    private final HashMap<Long, Queue<AtomicBoolean>> resourceAccessQueue = new HashMap<>();
 
     private static final Random rand = new Random();
 
     public Process(Long id){
         this.id = id;
-
-        if(checkCoordinator().isEmpty()){
-            this.becomeCoordinator();
-        }
     }
 
     public void run(){
-        int accessResourceCooldown = rand.nextInt(10000, 25000);
         this.fillResourceAccessQueue();
         try{
             while(true){
                 Thread.sleep(accessResourceCooldown);
                 int resourceToUse = rand.nextInt(Main.resourceList.size());
                 tryToAccessResource(Main.resourceList.get(resourceToUse));
+
             }
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        } catch (InterruptedException ignored) {
         }
     }
 
     private Optional<ThreadProcess> checkCoordinator(){
-        System.out.println("Checando coordenador");
-        if(Main.threadProcessList.stream().noneMatch(threadProcess -> threadProcess.getProcess().isCoordinator)){
-            Main.startElection(this);
+        if(Main.threadProcessList.stream().noneMatch(threadProcess -> (threadProcess.process().isCoordinator && threadProcess.thread().isAlive()))){
+            return Main.startElection(this);
         }
 
-        return Main.threadProcessList.stream().filter(threadProcess -> threadProcess.getProcess().isCoordinator).findFirst();
+        return Main.threadProcessList.stream().filter(threadProcess -> (threadProcess.process().isCoordinator && threadProcess.thread().isAlive())).findFirst();
     }
 
     private void tryToAccessResource(Resource resource) throws InterruptedException {
@@ -48,32 +42,30 @@ public class Process implements Runnable{
         if(optCoordinator.isEmpty()){
             return;
         }
-        System.out.println("thread request: " + Main.threadProcessList.stream().filter(tp -> tp.getProcess().getId().equals(this.getId())).findFirst().get().getThread().getId());
-        optCoordinator.get().getProcess().requestAccess(resource, this);
-        this.wait();
-        System.out.println("Processo " + this.getId() + " accessou o recurso " + resource.getId());
+
+        AtomicBoolean resourceFree = optCoordinator.get().process().createFlag(resource);
+
+        while(true){
+            if(resourceFree.get()){
+                System.out.println("Processo " + this.getId() + " ganhou acesso ao recurso " + resource.getId());
+                String retorno = resource.useResource();
+                System.out.println("Processo " + this.getId() + " acessou o recurso " + resource.getId() + ". Retorno: " + retorno);
+                break;
+            }
+        }
     }
 
-    public void requestAccess(Resource resource, Process process) throws InterruptedException {
-        Queue<ThreadProcess> accessQueue = this.resourceAccessQueue.get(resource.getId());
-        ThreadProcess threadProcess = Main.threadProcessList.stream().filter(tp -> tp.getProcess().getId().equals(process.getId())).findFirst().get();
-        System.out.println("thread found: " + threadProcess.getThread().getId());
-        System.out.println("thread coord: " + Main.threadProcessList.stream().filter(tp -> tp.getProcess().getId().equals(this.getId())).findFirst().get().getThread().getId());
+    public AtomicBoolean createFlag(Resource resource){
+        Queue<AtomicBoolean> accessQueue = this.resourceAccessQueue.get(resource.getId());
 
-        System.out.println("Fila para o recurso " + resource.getId() + ": " + Arrays.toString(accessQueue.toArray()));
+        AtomicBoolean resourceFree = new AtomicBoolean(false);
+        accessQueue.add(resourceFree);
 
-        if(accessQueue.isEmpty() && !resource.isOccupied()){
-            threadProcess.getThread().notify();
-            return;
-        }
-
-        accessQueue.add(threadProcess);
-
-        CheckResourceAccessRunnable checkRunnable = new CheckResourceAccessRunnable(resource);
+        CheckResourceAccessRunnable checkRunnable = new CheckResourceAccessRunnable(resource, accessQueue);
         Thread checkThread = new Thread(checkRunnable);
         checkThread.start();
-        checkThread.join();
-        accessQueue.remove().notify();
+
+        return resourceFree;
     }
 
     private void fillResourceAccessQueue(){

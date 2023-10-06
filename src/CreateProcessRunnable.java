@@ -7,9 +7,8 @@ public class CreateProcessRunnable implements Runnable{
     public void run(){
         while(true){
             try {
-                Thread.sleep(15000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                Thread.sleep(20000);
+            } catch (InterruptedException ignored) {
             }
 
             Process process = new Process(this.generateProcessId());
@@ -18,6 +17,7 @@ public class CreateProcessRunnable implements Runnable{
             Main.threadProcessList.add(new ThreadProcess(thread, process));
 
             System.out.println("Processo criado: #" + process.getId());
+
         }
     }
 
